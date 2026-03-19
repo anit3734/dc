@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  role      String     @default("user")
+  createdAt DateTime   @default(now())
+  
+  payments  Payment[]
+  downloads Download[]
+}
+
+model Company {
+  cin               String     @id
+  name              String
+  status            String?
+  state             String?
+  registration_date String?
+  
+  // Deep Data
+  category          String?
+  sub_category      String?
+  class             String?
+  authorized_capital Float?
+  paid_up_capital    Float?
+  address           String?    @db.Text
+  email             String?
+  
+  directors         Director[]
+  charges           Charge[]
+}
+
+model Director {
+  id          String   @id @default(cuid())
+  din         String?
+  name        String
+  designation String?
+  appointment_date String?
+  
+  company_id  String
+  company     Company  @relation(fields: [company_id], references: [cin], onDelete: Cascade)
+}
+
+model Charge {
+  id          String   @id @default(cuid())
+  charge_id   String?
+  date        String?
+  amount      Float?
+  holder      String?
+  status      String?
+  
+  company_id  String
+  company     Company  @relation(fields: [company_id], references: [cin], onDelete: Cascade)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  amount    Float
+  status    String   @default("pending")
+  type      String   @default("export") // "export" or "profile_unlock"
+  targetId  String?  // CIN if profile_unlock
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Download {
+  id        String   @id @default(cuid())
+  file      String
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
