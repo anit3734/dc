@@ -9,7 +9,6 @@ export async function GET(req: Request) {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
     const userId = (session.user as any).id;
 
     const downloads = await prisma.download.findMany({
@@ -17,9 +16,9 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ downloads });
+    return NextResponse.json(downloads);
   } catch (error) {
-    console.error("Downloads Error:", error);
+    console.error("Fetch Downloads Error:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }

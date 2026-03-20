@@ -25,25 +25,40 @@ model Company {
   state             String?
   registration_date String?
   
-  // Deep Data
+  // Extended Regulatory Data
+  listed            String?    // Listed/Unlisted
+  roc               String?
+  registration_no    String?
   category          String?
   sub_category      String?
   class             String?
+  incorporation_date String?
+  age               String?
+  nic_code          String?
+  nic_description   String?    @db.Text
+  num_members       String?
+  
+  // Financials & Contact
   authorized_capital Float?
   paid_up_capital    Float?
   address           String?    @db.Text
   email             String?
+  telephone         String?
+  website           String?    // Added for enhanced intelligence
+  llp_status        String?    // Added for LLP distinction
   
   directors         Director[]
   charges           Charge[]
 }
 
 model Director {
-  id          String   @id @default(cuid())
-  din         String?
-  name        String
-  designation String?
+  id               String   @id @default(cuid())
+  din             String?
+  name            String
+  designation     String?
   appointment_date String?
+  address         String?  @db.Text
+  contact_no      String?
   
   company_id  String
   company     Company  @relation(fields: [company_id], references: [cin], onDelete: Cascade)

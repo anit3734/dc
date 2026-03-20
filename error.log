@@ -1,0 +1,9 @@
+
+Invalid `prisma.company.upsert()` invocation in
+D:\Anit Workspace\DataCorp\zaubacorp-dashboard\test_error.js:44:22
+
+  41 await prisma.$transaction([
+  42   prisma.director.deleteMany({ where: { company_id: item.cin } }),
+  43   prisma.charge.deleteMany({ where: { company_id: item.cin } }),
+→ 44   prisma.company.upsert(
+The column `listed` does not exist in the current database.

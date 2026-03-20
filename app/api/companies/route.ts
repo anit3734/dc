@@ -14,8 +14,11 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
+    const minCapital = parseFloat(searchParams.get("minCapital") || "0");
     const state = searchParams.get("state") || "";
     const status = searchParams.get("status") || "";
+
+    const roc = searchParams.get("roc") || "";
 
     const skip = (page - 1) * limit;
 
@@ -26,15 +29,21 @@ export async function GET(req: Request) {
         { cin: { contains: search } },
       ];
     }
-    if (state) where.state = state;
-    if (status) where.status = status;
+    if (minCapital > 0) {
+      where.authorized_capital = { gte: minCapital };
+    }
+    if (roc) where.roc = { contains: roc };
+    if (state) where.state = { contains: state };
+    if (status) where.status = { contains: status };
 
+    console.log("NEXT.JS DB URL IS:", process.env.DATABASE_URL);
     const [companies, total] = await Promise.all([
-      prisma.company.findMany({
+      (prisma.company as any).findMany({
         where,
         skip,
         take: limit,
         orderBy: { registration_date: "desc" },
+        include: { directors: true },
       }),
       prisma.company.count({ where }),
     ]);

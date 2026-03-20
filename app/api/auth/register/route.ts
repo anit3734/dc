@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
-      return Response.json({ message: "Invalid input data", errors: parsed.error.format() }, { status: 400 });
+      return NextResponse.json({ message: "Invalid input data", errors: parsed.error.format() }, { status: 400 });
     }
 
     const { email, password } = parsed.data;
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return Response.json({ message: "User already exists" }, { status: 409 });
+      return NextResponse.json({ message: "User already exists" }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,9 +36,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return Response.json({ message: "User created successfully", userId: user.id }, { status: 201 });
+    return NextResponse.json({ message: "User created successfully", userId: user.id }, { status: 201 });
   } catch (error) {
     console.error("Registration Error", error);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
