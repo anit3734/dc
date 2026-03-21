@@ -12,7 +12,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [telemetry, setTelemetry] = useState("0x2A4");
+  const [telemetry, setTelemetry] = useState("0x0000"); // Stable initial state
 
   useEffect(() => {
     setMounted(true);
@@ -47,7 +47,7 @@ export default function RegisterPage() {
     }
   };
 
-  if (!mounted) return null;
+  // Removed: if (!mounted) return null; // Prevents white screen on mobile
 
   return (
     <div className="h-screen w-full bg-white text-[#2a3547] font-sans overflow-hidden relative grid grid-cols-1 lg:grid-cols-2">

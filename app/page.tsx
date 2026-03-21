@@ -9,8 +9,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     
@@ -32,7 +34,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-[#2a3547] font-sans selection:bg-[#0085db] selection:text-white overflow-x-hidden">
+    <div className={cn(
+      "min-h-screen bg-[#f4f7fb] text-[#2a3547] font-sans selection:bg-[#0085db] selection:text-white overflow-x-hidden",
+      mounted && "js-active"
+    )}>
       
       {/* 1. Navbar - Thinner */}
       <nav className={cn(
@@ -89,7 +94,7 @@ export default function Home() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#0085db]/5 blur-[100px] rounded-full animate-blob pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#13deb9]/5 blur-[100px] rounded-full animate-blob animation-delay-2000 pointer-events-none" />
         
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center reveal">
+        <div className={cn("max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center reveal", mounted && "reveal-visible")}>
           <div className="animate-in fade-in slide-in-from-left duration-700">
              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ecf2ff] border border-[#d1e1ff] rounded-full mb-4">
                 <Zap size={12} className="text-[#0085db] animate-pulse" />
@@ -444,10 +449,16 @@ export default function Home() {
         .animate-float { animation: float 5s ease-in-out infinite; }
         .animation-delay-2000 { animation-delay: 2s; }
         
-        .reveal { opacity: 0; transform: translateY(25px); transition: all 1s ease-out; }
-        .reveal.reveal-visible { opacity: 1; transform: translateY(0); }
-        .reveal-content { opacity: 0; transform: translateY(20px); transition: all 0.8s ease-out; }
-        .reveal.reveal-visible .reveal-content { opacity: 1; transform: translateY(0); }
+        /* Default state: visible for SEO and JS-failed scenarios */
+        .reveal { opacity: 1; transform: translateY(0); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+        
+        /* If JS is active, we can hide and then reveal */
+        .js-active .reveal { opacity: 0; transform: translateY(20px); }
+        .js-active .reveal.reveal-visible { opacity: 1 !important; transform: translateY(0) !important; }
+
+        .reveal-content { opacity: 1; transform: translateY(0); transition: all 0.6s ease-out; }
+        .js-active .reveal-content { opacity: 0; transform: translateY(15px); }
+        .js-active .reveal.reveal-visible .reveal-content { opacity: 1 !important; transform: translateY(0) !important; }
         .delay-200 { transition-delay: 200ms; }
         .delay-300 { transition-delay: 300ms; }
         .overflow-x-hidden { overflow-x: hidden; }

@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        console.log(`[AUTH] JWT created for user: ${user.email}`);
       }
       return token;
     },
@@ -52,8 +53,23 @@ export const authOptions: NextAuthOptions = {
           (session.user as any).id = token.id;
           (session.user as any).role = token.role;
         }
+        console.log(`[AUTH] Session validated for user ID: ${token.id}`);
+      } else {
+        console.log(`[AUTH] Session validation FAILED: No token found.`);
       }
       return session;
+    },
+  },
+  debug: process.env.NODE_ENV === "development",
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: false, // IP based access without HTTPS
+      },
     },
   },
 };
