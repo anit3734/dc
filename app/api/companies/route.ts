@@ -6,9 +6,10 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || !(session.user as any)?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
 
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -22,11 +23,16 @@ export async function GET(req: Request) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      savedByUsers: { some: { userId } }
+    };
     if (search) {
+      const s = search.trim();
       where.OR = [
-        { name: { contains: search } },
-        { cin: { contains: search } },
+        { name: { contains: s } },
+        { cin: { contains: s } },
+        { address: { contains: s } },
+        { directors: { some: { name: { contains: s } } } },
       ];
     }
     if (minCapital > 0) {
@@ -37,16 +43,15 @@ export async function GET(req: Request) {
     if (status) where.status = { contains: status };
 
     console.log("NEXT.JS DB URL IS:", process.env.DATABASE_URL);
-    const [companies, total] = await Promise.all([
-      (prisma.company as any).findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { registration_date: "desc" },
-        include: { directors: true },
-      }),
-      prisma.company.count({ where }),
-    ]);
+    // Execute sequentially to avoid connection pool exhaustion (Error 1040)
+    const total = await prisma.company.count({ where });
+    const companies = await (prisma.company as any).findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { registration_date: "desc" },
+      include: { directors: true },
+    });
 
     return NextResponse.json({
       companies,

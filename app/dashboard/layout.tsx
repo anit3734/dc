@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Script from "next/script";
+import { MobileNavbar } from "@/components/MobileNavbar";
 import { Sidebar } from "@/components/Sidebar";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,21 +11,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const email = (session.user as any)?.email || "";
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-50">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+    <div className="h-screen flex bg-background overflow-hidden relative">
 
-      {/* Left Sidebar - Fixed */}
-      <div className="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-[50]">
+      {/* Sidebar - Desktop */}
+      <aside className="hidden md:flex md:w-[220px] flex-col shrink-0 z-[50]">
         <Sidebar userEmail={email} />
-      </div>
+      </aside>
 
-      {/* Main Content Area - Scrollable */}
-      <div className="md:pl-72 flex flex-col flex-1 w-0 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-6 min-h-full">
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8">
-              {children}
-            </div>
+      {/* Main Content Area */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+        <MobileNavbar userEmail={email} />
+        <main className="flex-1 relative overflow-y-auto focus:outline-none flex flex-col">
+          <div className="flex-1 flex flex-col">
+            {children}
           </div>
         </main>
       </div>

@@ -1,34 +1,39 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const statePath = path.join(process.cwd(), "scraper_state.json");
-    let state = { currentRocIndex: 0, currentPage: 1, totalSaved: 0 };
-    
-    if (fs.existsSync(statePath)) {
-      state = JSON.parse(fs.readFileSync(statePath, "utf-8"));
+    const session = await getServerSession(authOptions);
+    if (!session || !(session.user as any)?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
 
-    // Get live DB count to verify vs state
-    const dbCount = await prisma.company.count();
+    // Get live DB counts explicitly saved by THIS specific user
+    const totalEntities = await prisma.company.count({
+      where: { savedByUsers: { some: { userId } } }
+    });
     
-    // Get count of companies with deep data (address or financials present)
-    const deepDataCount = await prisma.company.count({
+    // Get count of user's companies with deep data (address or financials present)
+    const successDataCount = await prisma.company.count({
         where: {
+            savedByUsers: { some: { userId } },
             OR: [
                 { address: { not: null } },
-                { authorized_capital: { gt: 0 } }
+                { email: { not: null } },
+                { telephone: { not: null } }
             ]
         }
     });
 
+    const failedScrapCount = totalEntities - successDataCount;
+
     return NextResponse.json({
-      ...state,
-      dbCount,
-      deepDataCount,
+      totalScraped: totalEntities,
+      successCount: successDataCount,
+      failedCount: failedScrapCount,
       lastUpdated: new Date().toISOString()
     });
   } catch (error) {

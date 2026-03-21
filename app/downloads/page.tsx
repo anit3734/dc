@@ -52,7 +52,7 @@ export default function DownloadsPage() {
              <p className="text-sm text-slate-500">Access and retrieve previously exported intelligence assets.</p>
           </div>
         </div>
-        <Button onClick={fetchDownloads} variant="ghost" className="text-xs font-bold text-indigo-600 hover:bg-white border-slate-200">
+        <Button onClick={fetchDownloads} variant="ghost" className="text-xs font-bold text-[#3b82f6] hover:bg-white border-slate-200">
            <RefreshCw size={14} className="mr-2" /> Refresh Manifest
         </Button>
       </div>
@@ -68,7 +68,7 @@ export default function DownloadsPage() {
                />
             </div>
             <div className="hidden md:flex items-center gap-3">
-               <Badge className="bg-white/50 text-indigo-600 border border-indigo-100 font-bold">VAULT_PROTOCOL_v4</Badge>
+               <Badge className="bg-white/50 text-[#3b82f6] border border-[#3b82f6]/20 font-bold">VAULT_PROTOCOL_v4</Badge>
             </div>
          </div>
 
@@ -104,7 +104,7 @@ export default function DownloadsPage() {
                            <TableCell className="font-mono text-[10px] text-slate-400">#{d.id.slice(0, 8).toUpperCase()}</TableCell>
                            <TableCell>
                               <div className="flex items-center gap-3">
-                                 <div className="h-9 w-9 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+                                 <div className="h-9 w-9 bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#3b82f6] rounded-lg flex items-center justify-center">
                                     <FileText size={18} />
                                  </div>
                                  <div className="flex flex-col">

@@ -40,7 +40,7 @@ export function UserNav({ email, role }: UserNavProps) {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all group"
       >
-        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div className="h-8 w-8 rounded-lg bg-[#3b82f6] flex items-center justify-center text-white text-xs font-bold shadow-sm">
           {initials}
         </div>
         <div className="hidden sm:flex flex-col items-start leading-none">
@@ -58,12 +58,12 @@ export function UserNav({ email, role }: UserNavProps) {
           {/* User Info Header */}
           <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
+              <div className="h-10 w-10 rounded-lg bg-[#3b82f6] flex items-center justify-center text-white font-bold shadow-sm">
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-slate-900 truncate">{email}</p>
-                <p className="text-[10px] text-indigo-600 font-semibold uppercase tracking-wide mt-0.5">
+                <p className="text-[10px] text-[#3b82f6] font-semibold uppercase tracking-wide mt-0.5">
                   {role || "User"} Account
                 </p>
               </div>
@@ -75,10 +75,10 @@ export function UserNav({ email, role }: UserNavProps) {
             <Link
               href="/dashboard/profile"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-[#3b82f6] transition-colors group"
             >
-              <div className="h-7 w-7 rounded-md bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
-                <User size={13} className="text-slate-500 group-hover:text-indigo-500" />
+              <div className="h-7 w-7 rounded-md bg-slate-100 group-hover:bg-[#3b82f6]/10 flex items-center justify-center transition-colors">
+                <User size={13} className="text-slate-500 group-hover:text-[#3b82f6]" />
               </div>
               <div>
                 <p className="font-semibold leading-none">My Profile</p>
@@ -89,10 +89,10 @@ export function UserNav({ email, role }: UserNavProps) {
             <Link
               href="/downloads"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-[#3b82f6] transition-colors group"
             >
-              <div className="h-7 w-7 rounded-md bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
-                <DownloadCloud size={13} className="text-slate-500 group-hover:text-indigo-500" />
+              <div className="h-7 w-7 rounded-md bg-slate-100 group-hover:bg-[#3b82f6]/10 flex items-center justify-center transition-colors">
+                <DownloadCloud size={13} className="text-slate-500 group-hover:text-[#3b82f6]" />
               </div>
               <div>
                 <p className="font-semibold leading-none">Downloads</p>
@@ -104,10 +104,10 @@ export function UserNav({ email, role }: UserNavProps) {
               <Link
                 href="/admin"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-[#3b82f6] transition-colors group"
               >
-                <div className="h-7 w-7 rounded-md bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
-                  <ShieldCheck size={13} className="text-slate-500 group-hover:text-indigo-500" />
+                <div className="h-7 w-7 rounded-md bg-slate-100 group-hover:bg-[#3b82f6]/10 flex items-center justify-center transition-colors">
+                  <ShieldCheck size={13} className="text-slate-500 group-hover:text-[#3b82f6]" />
                 </div>
                 <div>
                   <p className="font-semibold leading-none">Admin Panel</p>

@@ -1,152 +1,164 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Mail, Lock, BarChart3, ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck, Mail, Lock, Loader2, TerminalSquare, Activity, Globe, Database } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [mounted, setMounted]   = useState(false);
+  const [telemetry, setTelemetry] = useState("0x7FF");
+
+  useEffect(() => {
+    setMounted(true);
+    const interval = setInterval(() => {
+      setTelemetry("0x" + Math.floor(Math.random() * 0xFFFF).toString(16).toUpperCase().padStart(4, "0"));
+    }, 150);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (res?.error) {
-      setError("Invalid email or password");
-      setLoading(false);
-    } else {
-      router.push("/dashboard");
+    setLoading(true); setError("");
+    const res = await signIn("credentials", { email, password, redirect: false });
+    if (res?.error) { 
+      setError("Authentication Refused: Invalid Signatures"); 
+      setLoading(false); 
     }
+    else router.push("/dashboard");
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 font-sans">
-      <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div className="h-screen w-full bg-white text-[#2a3547] font-sans overflow-hidden relative grid grid-cols-1 lg:grid-cols-2">
+      
+      {/* 1. Branding Panel (Left) - Hidden on mobile, visible on LG+ */}
+      <div className="hidden lg:flex flex-col items-center justify-center relative overflow-hidden bg-[#0085db]">
+        {/* Abstract Circles / Decorations */}
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full border-[40px] border-white/5 pointer-events-none" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[300px] h-[300px] rounded-full border-[30px] border-white/5 pointer-events-none" />
+        <div className="absolute top-[20%] right-[10%] w-24 h-24 rounded-full bg-white/5 animate-pulse" />
         
-        {/* Branding */}
-        <div className="flex flex-col items-center mb-10">
-           <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-500/20 mb-4 rotate-3">
-              <BarChart3 size={28} className="text-white" />
-           </div>
-           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-             Zauba<span className="text-indigo-600">Insights</span>
-           </h1>
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-1">Intelligence Axis</p>
-        </div>
-
-        {/* Login Card */}
-        <div className="bg-white p-10 rounded-[32px] shadow-2xl shadow-indigo-500/5 border border-slate-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
-          
-          <div className="mb-8">
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">System Authentication</h2>
-            <p className="text-sm text-slate-500 font-medium">Access your corporate intelligence vault.</p>
+        <div className="relative z-10 text-center px-12 max-w-[500px]">
+          <div className="mb-10 inline-flex items-center gap-3">
+             <div className="h-12 w-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
+               <ShieldCheck size={28} className="text-white" />
+             </div>
+             <h1 className="text-3xl font-bold tracking-tight text-white italic uppercase">Zauba<span className="opacity-80 font-light">Insights</span></h1>
           </div>
-
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-bold px-4 py-3 rounded-xl flex items-center gap-2 animate-in shake duration-300">
-                 <ShieldCheck size={14} /> {error}
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <div className="group">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-1.5 block">Email Identity</label>
-                <div className="relative">
-                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                   <input
-                     type="email"
-                     required
-                     className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all text-sm"
-                     placeholder="name@company.com"
-                     value={email}
-                     onChange={(e) => setEmail(e.target.value)}
-                   />
-                </div>
-              </div>
-
-              <div className="group">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-1.5 block">Security Key</label>
-                <div className="relative">
-                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                   <input
-                     type="password"
-                     required
-                     className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-300 focus:ring-2 focus:ring-indigo-600 focus:bg-white transition-all text-sm"
-                     placeholder="••••••••"
-                     value={password}
-                     onChange={(e) => setPassword(e.target.value)}
-                   />
-                </div>
-              </div>
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 group active:scale-95"
-              disabled={loading}
-            >
-              {loading ? (
-                <RefreshCcw className="animate-spin" size={18} />
-              ) : (
-                <>
-                  Establish Connection
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </Button>
-            
-            <div className="pt-4 text-center">
-              <p className="text-[11px] font-bold text-slate-400">
-                New to the Axis?{" "}
-                <Link href="/register" className="text-indigo-600 hover:underline underline-offset-4 decoration-2">
-                  Create Registry Account
-                </Link>
-              </p>
-            </div>
-          </form>
+          
+          <h2 className="text-4xl font-extrabold text-white mb-6 leading-tight">Welcome to the Intelligence Portal</h2>
+          <p className="text-white/70 text-lg font-medium mb-10 leading-relaxed">
+            Experience next-generation data extraction and analysis with our professional administrative suite.
+          </p>
+          
+          <Link href="/" className="inline-flex items-center justify-center px-8 h-12 bg-white text-[#0085db] font-bold rounded-[32px] hover:bg-opacity-90 transition-all shadow-lg active:scale-95">
+            Learn More
+          </Link>
         </div>
 
-        {/* Footer Disclaimer */}
-        <p className="mt-8 text-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.4em]">
-           Controlled Access • MCA Data Node 5.1
-        </p>
+        {/* Floating Animation Elements */}
+        <div className="absolute bottom-10 left-10 flex flex-col gap-4 opacity-30">
+           <div className="flex items-center gap-3">
+              <Globe size={16} className="text-white" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white">Global Network</span>
+           </div>
+           <div className="flex items-center gap-3">
+              <Database size={16} className="text-white" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white">Encrypted Vault</span>
+           </div>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function RefreshCcw(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-      <path d="M21 3v5h-5" />
-    </svg>
+      {/* 2. Login Form Panel (Right) */}
+      <div className="flex items-center justify-center p-6 sm:p-12 bg-[#f4f7fb]">
+        <div className="w-full max-w-[420px] animate-in fade-in slide-in-from-right duration-700">
+           <div className="bg-white rounded-[32px] p-8 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-[#e5eaef]">
+              
+              <div className="mb-10 text-center lg:text-left">
+                <h3 className="text-2xl font-bold text-[#2a3547] mb-2 leading-none">Sign In</h3>
+                <p className="text-[#707eae] text-sm font-medium">Your account to manage everything</p>
+              </div>
+
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                {error && (
+                  <div className="bg-[#fff1f2] border border-[#ffe4e6] text-[#e11d48] text-[11px] font-bold px-4 py-3 rounded-xl flex items-center gap-3 animate-shake">
+                    <ShieldCheck size={16} /> {error}
+                  </div>
+                )}
+
+                <div className="space-y-5">
+                  <div className="space-y-2 group">
+                    <label className="text-[12px] font-bold text-[#2a3547] ml-1 transition-colors group-focus-within:text-[#0085db]">Email Address</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#707eae] group-focus-within:text-[#0085db] transition-colors" size={18} />
+                      <input
+                        type="email" required
+                        className="block w-full h-12 bg-white border border-[#e5eaef] rounded-xl pl-12 pr-4 text-[14px] text-[#2a3547] placeholder:text-[#707eae]/50 focus:outline-none focus:border-[#0085db] focus:ring-4 focus:ring-[#0085db]/5 transition-all font-medium"
+                        placeholder="john@example.com"
+                        value={email} onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 group">
+                    <div className="flex items-center justify-between px-1">
+                      <label className="text-[12px] font-bold text-[#2a3547] transition-colors group-focus-within:text-[#0085db]">Password</label>
+                      <button type="button" className="text-[11px] font-bold text-[#0085db] hover:underline">Forgot password?</button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#707eae] group-focus-within:text-[#0085db] transition-colors" size={18} />
+                      <input
+                        type="password" required
+                        className="block w-full h-12 bg-white border border-[#e5eaef] rounded-xl pl-12 pr-4 text-[14px] text-[#2a3547] placeholder:text-[#707eae]/50 focus:outline-none focus:border-[#0085db] focus:ring-4 focus:ring-[#0085db]/5 transition-all font-medium"
+                        placeholder="••••••••"
+                        value={password} onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit" disabled={loading}
+                    className="w-full h-12 bg-[#0085db] hover:bg-[#0074c0] active:scale-[0.98] disabled:bg-[#f4f7fb] disabled:text-[#707eae] text-white font-bold text-[14px] rounded-xl shadow-lg shadow-[#0085db]/20 transition-all flex items-center justify-center gap-3"
+                  >
+                    {loading ? <Loader2 className="animate-spin" size={20} /> : "Sign In"}
+                  </button>
+                </div>
+
+                <div className="text-center pt-4">
+                  <p className="text-[13px] font-medium text-[#707eae]">
+                    New to ZaubaInsights?{" "}
+                    <Link href="/register" className="text-[#0085db] font-bold hover:underline">
+                      Create an account
+                    </Link>
+                  </p>
+                </div>
+              </form>
+           </div>
+           
+           <div className="mt-8 text-center text-[11px] text-[#707eae] font-medium">
+             &copy; 2026 ZaubaCorp Data Solutions. All rights reserved.
+           </div>
+        </div>
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+          20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+      `}} />
+    </div>
   );
 }

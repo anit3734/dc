@@ -20,7 +20,10 @@ export async function POST(req: Request) {
     //   return NextResponse.json({ message: "Payment ID is required" }, { status: 400 });
     // }
 
-    const whereClause = companyCins.length > 0 ? { cin: { in: companyCins } } : {};
+    const whereClause: any = companyCins.length > 0 ? { cin: { in: companyCins } } : {};
+    
+    // Multi-tenant isolation: only retrieve companies saved by this user
+    whereClause.savedByUsers = { some: { userId } };
     
     const companies = await (prisma.company as any).findMany({
       where: whereClause,

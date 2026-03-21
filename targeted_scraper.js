@@ -15,11 +15,23 @@ const { PrismaClient } = require("@prisma/client");
 const fs = require("fs");
 const path = require("path");
 
+function parseArgs() {
+  const args = {};
+  process.argv.slice(2).forEach(arg => {
+    const [key, value] = arg.split('=');
+    if (key.startsWith('--')) {
+      args[key.slice(2)] = value ? value.replace(/(^["']|["']$)/g, '') : true;
+    }
+  });
+  return args;
+}
+const CLI_ARGS = parseArgs();
+
 const prisma = new PrismaClient();
 const STATE_FILE = path.join(__dirname, "targeted_scraper_state.json");
 
 const CONFIG = {
-  TARGET_ROCS: [
+  TARGET_ROCS: CLI_ARGS.state ? [`RoC-${CLI_ARGS.state}`] : [
     "RoC-Delhi", "RoC-Mumbai", "RoC-Kolkata", "RoC-Bangalore", "RoC-Chennai",
     "RoC-Hyderabad", "RoC-Ahmedabad", "RoC-Pune", "RoC-Jaipur", "RoC-Chandigarh"
   ],
@@ -28,8 +40,10 @@ const CONFIG = {
   DELAY_MIN: 700,
   DELAY_MAX: 2000,
   DEEP_SCRAPE_DIRECTORS: true,
-  TARGET_SAVES: 1000 // Configured to scrape a massively larger batch
+  SESSION_TARGET: CLI_ARGS.limit ? parseInt(CLI_ARGS.limit) : 1000
 };
+
+let sessionSaved = 0;
 
 function loadState() {
   if (fs.existsSync(STATE_FILE)) return JSON.parse(fs.readFileSync(STATE_FILE, "utf-8"));
@@ -298,7 +312,7 @@ async function saveCompany(item, d) {
     llp_status: safeLength(d.llp_status || "Not Available", 190),
   };
 
-  await prisma.$transaction([
+  const txBlocks = [
     prisma.director.deleteMany({ where: { company_id: item.cin } }),
     prisma.charge.deleteMany({ where: { company_id: item.cin } }),
     prisma.company.upsert({
@@ -306,7 +320,39 @@ async function saveCompany(item, d) {
       update: { ...payload, directors: { create: directorData }, charges: { create: d.charges || [] } },
       create: { cin: item.cin, registration_date: new Date().toISOString().slice(0, 10), ...payload, directors: { create: directorData }, charges: { create: d.charges || [] } },
     }),
-  ]);
+  ];
+
+  if (CLI_ARGS.userId) {
+    txBlocks.push(
+      prisma.userSavedEntity.upsert({
+        where: { userId_cin: { userId: CLI_ARGS.userId, cin: item.cin } },
+        update: {},
+        create: { userId: CLI_ARGS.userId, cin: item.cin }
+      })
+    );
+  }
+
+  await prisma.$transaction(txBlocks);
+}
+
+// ─── Single Company DDG Search ────────────────────────────────────────────────
+async function searchCompanyDDG(page, query) {
+  try {
+    const ddgUrl = `https://html.duckduckgo.com/html/?q=site:zaubacorp.com/company+${encodeURIComponent(query)}`;
+    await page.goto(ddgUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+    return await page.evaluate(() => {
+      const a = document.querySelector('a.result__url');
+      if (!a) return null;
+      let url = a.getAttribute('href') || "";
+      if (url.includes('uddg=')) url = decodeURIComponent(url.split('uddg=')[1].split('&')[0]);
+      if (url.startsWith('//')) url = 'https:' + url;
+      const match = url.match(/\/([L|U]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6})/);
+      return match ? { cin: match[1], name: document.querySelector('.result__title')?.textContent || "" } : null;
+    });
+  } catch (e) {
+    console.error("DDG search fallback failed:", e.message);
+    return null;
+  }
 }
 
 // ─── Main Runner ──────────────────────────────────────────────────────────────
@@ -318,11 +364,7 @@ async function run() {
 
   const state = loadState();
   console.log(`Resuming: ROC[${state.currentRocIndex}] CHAR[${state.currentCharIndex}] PAGE[${state.currentPage}] TotalSaved:${state.totalSaved}\n`);
-
-  if (state.totalSaved >= CONFIG.TARGET_SAVES) {
-    console.log(`🎯 Target of ${CONFIG.TARGET_SAVES} companies already reached! Exiting. To scrape more, delete targeted_scraper_state.json or increase TARGET_SAVES.`);
-    return;
-  }
+  console.log(`🎯 Session Target: ${CONFIG.SESSION_TARGET} new companies\n`);
 
   const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
   const ctx = await browser.newContext({
@@ -337,17 +379,46 @@ async function run() {
   let targetReached = false;
 
   try {
-    for (let ri = state.currentRocIndex; ri < CONFIG.TARGET_ROCS.length && !targetReached; ri++) {
-      const roc = CONFIG.TARGET_ROCS[ri];
-      console.log(`\n╔══ RoC: ${roc} ══╗`);
+    if (CLI_ARGS.company) {
+      console.log(`\n▶ Direct Company Mode: Querying "${CLI_ARGS.company}"`);
+      const ddgResult = await searchCompanyDDG(page, CLI_ARGS.company);
+      if (ddgResult && ddgResult.cin) {
+        console.log(`  Found CIN: ${ddgResult.cin}`);
+        const deep = await scrapeCompanyProfile(page, ddgResult.cin, CLI_ARGS.company);
+        if (deep) {
+          // Address/Director checks are less strict for a direct search, but we will still run them
+          if (CONFIG.DEEP_SCRAPE_DIRECTORS && deep.directors && deep.directors.length) {
+            for (const dir of deep.directors.slice(0, 2)) {
+              if (dir.profile_url) {
+                const info = await scrapeDirectorProfile(page, dir.profile_url);
+                dir.address = info.address || "";
+                dir.contact = info.contact || "";
+              }
+            }
+          }
+          await saveCompany({ cin: ddgResult.cin, name: CLI_ARGS.company, state: CLI_ARGS.state || "Unknown", status: "Active" }, deep);
+          console.log(`✓ VALIDATED & SAVED: ${CLI_ARGS.company} [${ddgResult.cin}]`);
+        } else {
+          console.log(`✗ Profile Data Failed for ${ddgResult.cin}`);
+        }
+      } else {
+        console.log(`✗ Could not resolve ZaubaCorp profile layout for: ${CLI_ARGS.company}`);
+      }
+      targetReached = true;
+    } else {
+      // ─── Bulk Regional Crawling Mode ───
+      const riStart = CLI_ARGS.state ? 0 : state.currentRocIndex;
+      for (let ri = riStart; ri < CONFIG.TARGET_ROCS.length && !targetReached; ri++) {
+        const roc = CONFIG.TARGET_ROCS[ri];
+        console.log(`\n╔══ RoC: ${roc} ══╗`);
 
-      const charStart = (ri === state.currentRocIndex) ? state.currentCharIndex : 0;
-      for (let ci = charStart; ci < CONFIG.CHARS.length && !targetReached; ci++) {
-        const char = CONFIG.CHARS[ci];
-        console.log(`\n▶ [${roc}] "${char}"`);
+        const charStart = (ri === state.currentRocIndex) ? state.currentCharIndex : 0;
+        for (let ci = charStart; ci < CONFIG.CHARS.length && !targetReached; ci++) {
+          const char = CONFIG.CHARS[ci];
+          console.log(`\n▶ [${roc}] "${char}"`);
 
-        const pageStart = (ri === state.currentRocIndex && ci === state.currentCharIndex) ? state.currentPage : 1;
-        for (let p = pageStart; p <= CONFIG.PAGES_PER_CHAR && !targetReached; p++) {
+          const pageStart = (ri === state.currentRocIndex && ci === state.currentCharIndex) ? state.currentPage : 1;
+          for (let p = pageStart; p <= CONFIG.PAGES_PER_CHAR && !targetReached; p++) {
           const listUrl = `https://www.zaubacorp.com/company-list/roc-${roc}/company-start-with-${char}/p-${p}-company.html`;
           console.log(`  [PAGE ${p}] Fetching list...`);
 
@@ -389,9 +460,8 @@ async function run() {
               const hasWebsite = Boolean(deep.website && deep.website.trim() !== "");
               const hasDirector = Boolean(deep.directors && deep.directors.length > 0);
 
-              if (hasName && hasCin && hasAddress && hasContact && hasIncDate && hasAge && hasWebsite && hasDirector) {
-
-                // Director address enrichment (only for valid companies to save time)
+              if (hasName && hasCin && hasAddress && hasContact && hasIncDate && hasAge && hasDirector) {
+                // ... save ...
                 if (CONFIG.DEEP_SCRAPE_DIRECTORS && deep.directors.length) {
                   for (const dir of deep.directors.slice(0, 2)) {
                     if (dir.profile_url) {
@@ -405,37 +475,35 @@ async function run() {
                 try {
                   await saveCompany(company, deep);
                   savedInThisPage++;
+                  sessionSaved++;
                   state.totalSaved++;
                   
                   const flags = [
                     deep.email ? "✉" : "·",
                     deep.telephone ? "📞" : "·",
-                    "📍", "🌐", `👥${deep.directors.length}`, "📅"
+                    "📍", deep.website ? "🌐" : "·", `👥${deep.directors.length}`, "📅"
                   ].join("");
                   
-                  console.log(`✓ VALIDATED! #${state.totalSaved} ${flags}`);
+                  console.log(`✓ VALIDATED! SESSION[${sessionSaved}/${CONFIG.SESSION_TARGET}] TOTAL[${state.totalSaved}] ${flags}`);
 
                   saveState(state); // Save immediately on every successful scrape
                   
-                  if (state.totalSaved >= CONFIG.TARGET_SAVES) {
-                    console.log(`\n🎯 SUCCESS: Reached target of ${CONFIG.TARGET_SAVES} highly genuine companies!`);
+                  if (sessionSaved >= CONFIG.SESSION_TARGET) {
+                    console.log(`\n🎯 SUCCESS: Reached session target of ${CONFIG.SESSION_TARGET} companies!`);
                     targetReached = true;
                     break;
                   }
                 } catch (e) {
-                  console.log(`✗ DB ERROR:`, e);
+                  console.log(`✗ DB ERROR:`, e.message);
                 }
               } else {
-                // Determine what was missing
                 const missing = [];
                 if (!hasAddress) missing.push("Address");
                 if (!hasContact) missing.push("Contact/Email");
                 if (!hasIncDate) missing.push("Inc Date");
                 if (!hasAge) missing.push("Age");
-                if (!hasWebsite) missing.push("Website");
                 if (!hasDirector) missing.push("Directors");
-                
-                console.log(`✗ Missing: ${missing.join(", ")}`);
+                console.log(`✗ Skipped: Missing [${missing.join(", ")}]`);
               }
 
               await delay(CONFIG.DELAY_MIN, CONFIG.DELAY_MAX);
@@ -450,18 +518,23 @@ async function run() {
             console.log("  ⏳ Pausing 5s...");
             await delay(5000, 6000);
           }
-        }
+        } // End Page Loop
 
-        state.currentCharIndex = ci + 1;
+        if (!CLI_ARGS.company) {
+          state.currentCharIndex = ci + 1;
+          state.currentPage = 1;
+          saveState(state);
+        }
+      } // End Char Loop
+
+      if (!CLI_ARGS.company) {
+        state.currentRocIndex = ri + 1;
+        state.currentCharIndex = 0;
         state.currentPage = 1;
         saveState(state);
       }
-
-      state.currentRocIndex = ri + 1;
-      state.currentCharIndex = 0;
-      state.currentPage = 1;
-      saveState(state);
-    }
+    } // End RoC Loop
+  }
     
     if (!targetReached) {
       console.log(`\n🏁 Finished all RoCs. Total genuine stored: ${state.totalSaved} companies`);
