@@ -77,7 +77,7 @@ export default function Home() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[90] bg-white dark:bg-[#0f172a] p-8 flex flex-col gap-5 animate-in fade-in slide-in-from-top duration-300 md:hidden">
+        <div className="fixed inset-0 z-[90] bg-white dark:bg-[#0f172a] p-8 pt-28 flex flex-col gap-5 animate-in fade-in slide-in-from-top duration-300 md:hidden">
            <Link href="#about" onClick={() => setIsMenuOpen(false)} className="text-lg font-bold text-[#2a3547] dark:text-[#e2e8f0]">About</Link>
            <Link href="#features" onClick={() => setIsMenuOpen(false)} className="text-lg font-bold text-[#2a3547] dark:text-[#e2e8f0]">Features</Link>
            <Link href="#stats" onClick={() => setIsMenuOpen(false)} className="text-lg font-bold text-[#2a3547] dark:text-[#e2e8f0]">Performance</Link>

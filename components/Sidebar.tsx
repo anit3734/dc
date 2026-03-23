@@ -36,7 +36,7 @@ function SidebarContent({ userEmail, onNavigate }: SidebarProps & { onNavigate?:
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#1e293b] font-sans selection:bg-[#0085db]/10 relative border-r border-[#e5eaef] dark:border-[#334155]">
       
-      <div className="px-5 py-8 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <div className="px-5 pt-14 pb-8 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
         
         {/* Logo Section */}
         <div className="flex items-center gap-3 mb-10 px-1">
@@ -86,7 +86,7 @@ function SidebarContent({ userEmail, onNavigate }: SidebarProps & { onNavigate?:
           </div>
         </div>
 
-        <button onClick={() => signOut({ callbackUrl: "/login" })} 
+        <button onClick={() => signOut({ callbackUrl: "/" })} 
           className="w-full h-10 flex items-center justify-center gap-2 rounded-xl text-[13px] font-bold text-[#707eae] bg-white dark:bg-[#0f172a] hover:bg-red-50 hover:text-red-500 border border-[#e5eaef] dark:border-[#334155] hover:border-red-200 transition-all shadow-sm">
           <LogOut size={16} /> Sign Out
         </button>

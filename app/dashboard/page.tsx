@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Download, RefreshCcw, MapPin, Mail, Phone, Globe, FileText, Sheet, Copy, Database, ChevronDown, Clock, Building2, CheckCircle2, MousePointerClick, Layers } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -287,7 +288,6 @@ export default function DashboardPage() {
 
           {[
             { value: stateFilter, set: setStateFilter, placeholder: "Region (State)" },
-            { value: statusFilter, set: setStatusFilter, placeholder: "Company Status" },
             { value: rocFilter, set: setRocFilter, placeholder: "RoC Office" },
           ].map(({ value, set, placeholder }) => (
             <input
@@ -299,6 +299,20 @@ export default function DashboardPage() {
               className="flex-1 min-w-[140px] h-[38px] px-4 bg-[#f4f7fb] dark:bg-[#1e293b] border border-[#e5eaef] dark:border-[#334155] rounded-xl text-[13px] text-[#2a3547] dark:text-[#e2e8f0] placeholder:text-[#707eae] focus:outline-none focus:border-[#0085db] focus:ring-4 focus:ring-[#0085db]/5 transition-all"
             />
           ))}
+
+          <Select value={statusFilter || "all"} onValueChange={(val) => setStatusFilter(val === "all" ? "" : (val || ""))}>
+            <SelectTrigger className="flex-1 min-w-[140px] h-[38px] bg-[#f4f7fb] dark:bg-[#1e293b] border border-[#e5eaef] dark:border-[#334155] rounded-xl text-[13px] text-[#2a3547] dark:text-[#e2e8f0] focus:ring-4 focus:ring-[#0085db]/5">
+              <SelectValue placeholder="Company Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-[#1e293b] border-[#e5eaef] dark:border-[#334155] rounded-xl shadow-xl">
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Inactive">Inactive</SelectItem>
+              <SelectItem value="Amalgamated">Amalgamated</SelectItem>
+              <SelectItem value="Strike Off">Strike Off</SelectItem>
+              <SelectItem value="Under Process">Under Process</SelectItem>
+            </SelectContent>
+          </Select>
 
           {hasFilters && (
             <button

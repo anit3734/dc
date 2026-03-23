@@ -78,7 +78,7 @@ async function scrapeCompanyProfile(page, cin, name) {
       listed: "", roc: "", registration_no: "", category: "",
       sub_category: "", class_of_company: "", incorporation_date: "", age: "",
       num_members: "", llp_status: "", authorized_capital: 0, paid_up_capital: 0,
-      nic_code: "", nic_description: "", directors: [], charges: [],
+      nic_code: "", nic_description: "", status: "", directors: [], charges: [],
     };
 
     const clean = s => (s || "").replace(/\s+/g, " ").replace(/click here to see more/gi, "").trim();
@@ -141,6 +141,7 @@ async function scrapeCompanyProfile(page, cin, name) {
           if (key.includes("age of company") || key === "age") r.age = r.age || val;
           if (key.includes("number of members")) r.num_members = r.num_members || val;
           if (key.includes("llp") && val.length < 60) r.llp_status = r.llp_status || val;
+          if (key === "company status" || key === "company status (for efiling)" || key === "status") r.status = r.status || val;
 
           if (key.includes("authorized capital") || key.includes("authorised capital")) {
             r.authorized_capital = r.authorized_capital || (parseFloat(val.replace(/[^0-9.]/g, "") || "0") || 0);
@@ -290,7 +291,7 @@ async function saveCompany(item, d) {
 
   const payload = {
     name: safeLength(item.name, 190), 
-    status: safeLength(item.status, 50), 
+    status: safeLength(d.status || item.status || "Active", 50), 
     state: safeLength(item.state, 50),
     listed: safeLength(d.listed, 190), 
     roc: safeLength(d.roc, 190), 
