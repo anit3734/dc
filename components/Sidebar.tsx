@@ -15,7 +15,10 @@ const routes = [
   { label: "Export History",  icon: CloudDownload,  href: "/dashboard/downloads"},
 ];
 
-interface SidebarProps { userEmail: string; }
+interface SidebarProps { 
+  userEmail: string; 
+  onNavigate?: () => void;
+}
 
 function SidebarContent({ userEmail, onNavigate }: SidebarProps & { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -92,14 +95,14 @@ function SidebarContent({ userEmail, onNavigate }: SidebarProps & { onNavigate?:
   );
 }
 
-export function Sidebar({ userEmail }: SidebarProps) {
+export function Sidebar({ userEmail, onNavigate }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
       {/* Desktop Content Only */}
       <div className="flex flex-col h-full w-full">
-        <SidebarContent userEmail={userEmail} />
+        <SidebarContent userEmail={userEmail} onNavigate={onNavigate} />
       </div>
     </>
   );

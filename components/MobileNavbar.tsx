@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 
 export function MobileNavbar({ userEmail }: { userEmail: string }) {
   const [isMounted, setIsMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -27,7 +28,7 @@ export function MobileNavbar({ userEmail }: { userEmail: string }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 md:hidden bg-white dark:bg-[#0f172a] border-b border-[#e5eaef] dark:border-[#334155] shrink-0 sticky top-0 z-50">
       <div className="flex items-center gap-3">
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger>
             <div className="text-[#707eae] dark:text-slate-400 hover:bg-[#ecf2ff] dark:hover:bg-[#0085db]/10 rounded-xl border border-[#e5eaef] dark:border-[#334155] h-10 w-10 flex items-center justify-center cursor-pointer">
               <Menu size={20} />
@@ -37,7 +38,7 @@ export function MobileNavbar({ userEmail }: { userEmail: string }) {
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>
-            <Sidebar userEmail={userEmail} />
+            <Sidebar userEmail={userEmail} onNavigate={() => setIsOpen(false)} />
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2.5">
